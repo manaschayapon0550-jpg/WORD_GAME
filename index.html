@@ -3,138 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เครื่องคิดเลข</title>
+<title>Pastel Snake Game</title>
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #FFF7F0;
+    font-family: "Segoe UI", sans-serif;
+}
 
-    .calculator {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        width: 320px;
-    }
+h1 {
+    color: #8B8BAE;
+    margin-bottom: 10px;
+}
 
-    #display {
-        width: 100%;
-        height: 60px;
-        font-size: 28px;
-        text-align: right;
-        padding: 10px;
-        margin-bottom: 15px;
-        box-sizing: border-box;
-    }
+.score {
+    font-size: 20px;
+    color: #7D7D9C;
+    margin-bottom: 10px;
+}
 
-    .buttons {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-    }
+canvas {
+    background: #FDFDFD;
+    border: 6px solid #D8C4F1;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
 
-    button {
-        height: 60px;
-        font-size: 22px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        background: #e0e0e0;
-    }
-
-    button:hover {
-        background: #d0d0d0;
-    }
-
-    .operator {
-        background: #ff9800;
-        color: white;
-    }
-
-    .operator:hover {
-        background: #f57c00;
-    }
-
-    .equal {
-        background: #4caf50;
-        color: white;
-    }
-
-    .equal:hover {
-        background: #388e3c;
-    }
-
-    .clear {
-        background: #f44336;
-        color: white;
-    }
-
-    .clear:hover {
-        background: #d32f2f;
-    }
+.info {
+    margin-top: 12px;
+    color: #8B8BAE;
+}
 </style>
 </head>
 <body>
 
-<div class="calculator">
-    <input type="text" id="display" readonly>
+<h1>🐍 Pastel Snake</h1>
+<div class="score">คะแนน: <span id="score">0</span></div>
 
-    <div class="buttons">
-        <button class="clear" onclick="clearDisplay()">C</button>
-        <button onclick="appendValue('(')">(</button>
-        <button onclick="appendValue(')')">)</button>
-        <button class="operator" onclick="appendValue('/')">÷</button>
+<canvas id="game" width="400" height="400"></canvas>
 
-        <button onclick="appendValue('7')">7</button>
-        <button onclick="appendValue('8')">8</button>
-        <button onclick="appendValue('9')">9</button>
-        <button class="operator" onclick="appendValue('*')">×</button>
-
-        <button onclick="appendValue('4')">4</button>
-        <button onclick="appendValue('5')">5</button>
-        <button onclick="appendValue('6')">6</button>
-        <button class="operator" onclick="appendValue('-')">−</button>
-
-        <button onclick="appendValue('1')">1</button>
-        <button onclick="appendValue('2')">2</button>
-        <button onclick="appendValue('3')">3</button>
-        <button class="operator" onclick="appendValue('+')">+</button>
-
-        <button onclick="appendValue('0')">0</button>
-        <button onclick="appendValue('.')">.</button>
-        <button onclick="deleteLast()">⌫</button>
-        <button class="equal" onclick="calculate()">=</button>
-    </div>
+<div class="info">
+ใช้ปุ่ม ⬆ ⬇ ⬅ ➡ เพื่อบังคับงู
 </div>
 
 <script>
-    const display = document.getElementById("display");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-    function appendValue(value) {
-        display.value += value;
-    }
+const box = 20;
+const rows = canvas.width / box;
 
-    function clearDisplay() {
-        display.value = "";
-    }
+let snake = [
+    {x: 10 * box, y: 10 * box}
+];
 
-    function deleteLast() {
-        display.value = display.value.slice(0, -1);
-    }
+let direction = "RIGHT";
 
-    function calculate() {
-        try {
-            display.value = eval(display.value);
-        } catch {
-            display.value = "Error";
+let food = randomFood();
+
+let score = 0;
+
+document.addEventListener("keydown", changeDirection);
+
+function changeDirection(e){
+    if(e.key === "ArrowUp" && direction !== "DOWN")
+        direction = "UP";
+    else if(e.key === "ArrowDown" && direction !== "UP")
+        direction = "DOWN";
+    else if(e.key === "ArrowLeft" && direction !== "RIGHT")
+        direction = "LEFT";
+    else if(e.key === "ArrowRight" && direction !== "LEFT")
+        direction = "RIGHT";
+}
+
+function randomFood(){
+    return {
+        x: Math.floor(Math.random() * rows) * box,
+        y: Math.floor(Math.random() * rows) * box
+    };
+}
+
+function collision(head, body){
+    for(let part of body){
+        if(head.x === part.x && head.y === part.y){
+            return true;
         }
     }
+    return false;
+}
+
+function draw(){
+
+    ctx.fillStyle = "#FFFDF8";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // อาหาร
+    ctx.fillStyle = "#FFB6C1";
+    ctx.beginPath();
+    ctx.arc(food.x + box/2, food.y + box/2, 8, 0, Math.PI*2);
+    ctx.fill();
+
+    // งู
+    snake.forEach((segment,index)=>{
+        ctx.fillStyle = index === 0 ? "#A8D8EA" : "#C7F0DB";
+
+        ctx.beginPath();
+        ctx.roundRect(segment.x, segment.y, box, box, 8);
+        ctx.fill();
+    });
+
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+
+    if(direction === "UP") headY -= box;
+    if(direction === "DOWN") headY += box;
+    if(direction === "LEFT") headX -= box;
+    if(direction === "RIGHT") headX += box;
+
+    // กินอาหาร
+    if(headX === food.x && headY === food.y){
+        score++;
+        document.getElementById("score").textContent = score;
+        food = randomFood();
+    } else {
+        snake.pop();
+    }
+
+    const newHead = {x: headX, y: headY};
+
+    // ชนกำแพงหรือชนตัวเอง
+    if(
+        headX < 0 ||
+        headY < 0 ||
+        headX >= canvas.width ||
+        headY >= canvas.height ||
+        collision(newHead, snake)
+    ){
+        clearInterval(game);
+        setTimeout(()=>{
+            alert("เกมจบ! คะแนน: " + score);
+            location.reload();
+        },100);
+        return;
+    }
+
+    snake.unshift(newHead);
+}
+
+const game = setInterval(draw, 120);
 </script>
 
 </body>
